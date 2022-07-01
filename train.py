@@ -6,11 +6,12 @@ import torch.optim as optim
 import config
 from tqdm import tqdm
 from trans_model import Transformer
-from dataset import data_make
+from dataloader import data_make
 
 def train(trans1, trans2, loader, opt_trans, mse, trans_scaler):
     
     loop = tqdm(loader, leave=True)
+    device = "cpu"
     
     for idx, (img_emd, txt_emd) in enumerate(loop):
         
@@ -48,9 +49,8 @@ def train(trans1, trans2, loader, opt_trans, mse, trans_scaler):
         
 def main():
     
-    trans1 = Transformer(512,512,512,8,3,3,4,0.3,'cpu')
+    trans1 = Transformer(512,512,512,8,3,3,4,0.3,'cpu')    
     trans2 = Transformer(512,512,512,8,3,3,4,0.3,'cpu')
-    
     learning_rate = 3e-4
     batch_size = 32
     epochs = 1000
@@ -59,13 +59,16 @@ def main():
     
     mse = nn.MSELoss()
     
-    dataset = data_make(img_pth="/u/scratch/a/asarkar/", txt_pth="/u/scratch/a/asarkar/")
+    dataset = data_make(root_img="/u/home/a/asarkar/scratch/cycle_transformer/train_image.pt",       root_txt="/u/home/a/asarkar/scratch/cycle_transformer/train_text.pt",data_length = 500)
+    
+    print(type(dataset))
     
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
     
     trans_scaler = torch.cuda.amp.GradScaler()
     
     for epoch in range(epochs):
+        print("Epoch ", epoch, "out of ", epochs)
         train(trans1, trans2, loader, opt_trans, mse, trans_scaler)
         
 if __name__ == "__main__":
